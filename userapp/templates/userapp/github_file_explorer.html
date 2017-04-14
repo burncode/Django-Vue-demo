@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Vue Demo GitHub-File-Explorer</title>
+        <!-- Bootstrap -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.6/css/bootstrap.min.css">
+        <!-- Octicons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/octicons/3.5.0/octicons.css">
+    </head>
+    <body>
+        <div id="github-file-explorer" class="container" style="margin-top: 10px">
+            <repo-input :prop_username="username" :prop_repo="repo" v-on:click="onChangeRepo"> </repo-input>
+            <file-explorer :username="username" :repo="repo"></file-explorer>            
+        </div>
+        
+        <script src="/static/userapp/js/vue.js"></script>
+        <script src="https://cdn.jsdelivr.net/vue.resource/1.2.1/vue-resource.min.js"></script>
+        <script type="text/x-template" id="repo-input-template">
+            <div class="row">
+                <div class="col-md-6 col-sm-6">
+                    <div class="input-group">
+                      <span class="input-group-addon" id="basic-addon1">用户名</span>
+                      <input type="text" class="form-control" aria-describedby="basic-addon1" :value="prop_username" ref="input-username" >
+                    </div>
+                    <br/>
+                    <div class="input-group">
+                      <span class="input-group-addon" id="basic-addon1">仓库名</span>
+                      <input type="text" class="form-control" aria-describedby="basic-addon1"  :value="prop_repo" ref="input-repo">
+                    </div>
+                    <br/>
+                    <p><input type="button" value="获取" @click="getRepoFiles" class="btn btn-default"></p>
+                </div>
+            </div>
+        </script>
+        <script type="text/x-template" id="file-explorer-template">
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <button class="btn btn-danger btn-xs" @click="goBack()" v-if="path !== '/'">返&emsp;回</button>
+                                </th>
+                                <th class="text-right">当前路径：{% verbatim %} {{ path }} {% endverbatim %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="file in sortedFiles">
+                                <td>
+                                    <div class="file" v-if="file.type === 'file'">
+                                        <span class="octicon octicon-file-text"></span>
+                                        <a href="#"> {% verbatim %} {{ file.name }} {% endverbatim %}</a>
+                                    </div>
+                                    <div class="directory" v-if="file.type === 'dir'">
+                                        <span class="octicon octicon-file-directory"></span>
+                                        <a href="#" @click="changePath(file.path)">{% verbatim %} {{ file.name }} {% endverbatim %}</a>
+                                    </div>
+                                </td>
+                                <td class="text-right">
+                                    <a :href="file.download_url" download="file" v-if="file.type === 'file'">
+                                        <span class="octicon octicon-cloud-download"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </script>
+        <script>
+            Vue.use(VueResource);
+            Vue.component('repo-input', {
+                template: '#repo-input-template',
+                data: function(){
+                    return {
+                        /*username: this.prop_username,
+                        repo: this.prop_repo*/
+                    };
+                },
+                props: {
+                    prop_username: {
+                        type: String,
+                        required: true
+                    },
+                    prop_repo: {
+                        type: String,
+                        required: true
+                    }
+                },
+                methods: {
+                    getRepoFiles: function(){
+                        console.log('getRepoFiles');
+                        this.$emit('click', this.$refs['input-username'].value, this.$refs['input-repo'].value);
+                    }
+                }
+            })
+            Vue.component('file-explorer', {
+                template: '#file-explorer-template',
+                data: function(){
+                    return  {
+                        path: '/',
+                        files: []
+                    };
+                },
+                props: {
+                  username: {
+                    type: String,
+                    required: true
+                  },
+                  repo: {
+                    type: String,
+                    required: true
+                  }
+                },
+                computed: {
+                  fullRepoUrl: function() {
+                    return this.username + '/' + this.repo;
+                  },
+                  sortedFiles: function() {
+                    return this.files.slice(0).sort(function(a, b) {
+                      if (a.type !== b.type) {
+                        if (a.type === 'dir') {
+                          return -1;
+                        } else {
+                          return 1;
+                        }
+                      } else {
+                        if (a.name < b.name) {
+                          return -1;
+                        } else {
+                          return 1;
+                        }
+                      }
+                    });
+                  }
+                },
+                methods: {
+                  getFiles: function() {
+                    var vue = this;
+                    var request = new XMLHttpRequest();
+                    request.onreadystatechange = function () {
+                        if (request.readyState === 4) {
+                            if (request.status === 200) {
+                                vue.files = JSON.parse(request.responseText);
+                            } else if(request.status === 404){
+                                vue.files = [];
+                            }
+                        }
+                    };
+                    request.open('GET', 'https://api.github.com/repos/' + this.fullRepoUrl + '/contents' + this.path, true);
+                    request.send();
+                    // this.$http.get('https://api.github.com/repos/' + this.fullRepoUrl + '/contents' + this.path,
+                    //   function(data) {
+                    //     this.files = data;
+                    //     console.log(files);
+                    //   }
+                    // );
+                  },
+                  changePath: function(path) {
+                    this.path = '/' + path;
+                    this.getFiles();
+                  },
+                  goBack: function() {
+                    var lastindex = this.path.lastIndexOf('/');
+                    if(lastindex !== -1){
+                        this.path = this.path.substring(0, lastindex);
+                    } else {
+                        this.path = '/';
+                    }
+                    
+                    this.path = this.path.split('/').slice(0, -1).join('/');
+                    if (this.path === '') this.path = '/';
+                    this.getFiles();
+                  }
+                },
+                watch: {
+                  repo: function(newVal, oldVal) {
+                    this.path = '/';
+                    this.getFiles();
+                  },
+                  username: function(newVal, oldVal){
+                    this.path = '/';
+                    this.getFiles();
+                  }
+                },
+                created: function() {
+                  if (this.username && this.repo) this.getFiles();
+                }
+            });
+            var app = new Vue({
+                el : '#github-file-explorer',
+                data : {
+                    username : 'L-xm',
+                    repo : 'python-shooter.org'
+                },
+                methods: {
+                    onChangeRepo: function(username, repo){
+                        console.log('onChangeRepo');
+                        this.username = username;
+                        this.repo = repo;
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

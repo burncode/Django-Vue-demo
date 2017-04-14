@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>用户信息</title>
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Octicons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/octicons/3.5.0/octicons.css">
+</head>
+<body>
+    
+    <div class="container" id="userinfoapp" style="width: 500px; margin-top: 100px">
+        <login-logout v-on:loginchanged="onLoginStateChanged"> </login-logout>
+        <userinfo :is-login="isLogin"></userinfo>  
+    </div>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdn.bootcss.com/vue/2.2.6/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/vue.resource/1.2.1/vue-resource.min.js"></script>
+    <script type="text/x-template" id="login-logout-template">
+    <div class="center-block">
+            <div class="input-group">
+              <span class="input-group-addon" id="basic-addon1">用户名</span>
+              <input type="text" class="form-control" aria-describedby="basic-addon1" v-model="username" ref="input-username">
+            </div>
+            <br/>
+            <div class="input-group">
+              <span class="input-group-addon" id="basic-addon1">密&nbsp;&nbsp;&nbsp;&nbsp;码</span>
+              <input type="password" class="form-control" aria-describedby="basic-addon1"  v-model="password" ref="input-password">
+            </div>
+            <br/>
+            <p >
+                <button @click="onClickAction" class="btn btn-danger" v-if="isLogin">注销</button>
+                <button @click="onClickAction" class="btn btn-default" v-else>登录</button>
+            </p>
+            <div class="alert alert-warning alert-dismissible" role="alert" ref="login-error-alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                登录失败
+            </div>
+
+    </div>
+    </script>
+    <script type="text/x-template" id="userinfo-template">
+    <div class="center-block">
+            <table class="table table-striped">
+                <caption class="text-center" style="font-size: 20px; font-weight: 600;">用户信息</caption>
+                <tbody>
+                    <tr>
+                        <td>Username</td>
+                        <td>{% verbatim %}{{ userinfo.username }} {% endverbatim %}</td>
+                    </tr>
+                    <tr>
+                        <td>First name</td>
+                        <td>{% verbatim %} {{ userinfo.firstname }} {% endverbatim %}</td>
+                    </tr>
+                    <tr>
+                        <td>Last name</td>
+                        <td>{% verbatim %} {{ userinfo.lastname }} {% endverbatim %}</td>
+                    </tr>
+                    <tr>
+                        <td>Email address</td>
+                        <td>{% verbatim %} {{ userinfo.email }} {% endverbatim %}</td>
+                    </tr>
+                    <tr>
+                        <td>Permissions</td>
+                        <td>{% verbatim %} {{ userinfo.permissions }} {% endverbatim %}</td>
+                    </tr>
+                    <tr>
+                        <td>Last login</td>
+                        <td>{% verbatim %} {{ userinfo.lastlogin }} {% endverbatim %}</td>
+                    </tr>
+                    <tr>
+                        <td>Date joined</td>
+                        <td>{% verbatim %} {{ userinfo.datejoined }} {% endverbatim %}</td>
+                    </tr>
+                </tbody>
+            </table>
+    </div>        
+    </script>
+    <script>
+        Vue.use(VueResource);
+        Vue.component('login-logout', {
+            template: '#login-logout-template',
+            data: function(){
+                return {
+                    username: 'test',
+                    password: 'test1234',
+                    isLogin: false,
+                    loginFailed: false,
+                    loginUrl: '/user/login',
+                    logoutUrl: '/user/logout',
+                };
+            },
+            computed: {
+            },
+            methods: {
+                login: function(){
+                    var vm = this;
+                    this.$http.post(this.loginUrl, {
+                        'username': this.username,
+                        'password': this.password
+                    }).then((res) => {
+                        if(!res.ok){
+                            vm.isLogin = false;
+                            vm.showLoginError();
+                            return;
+                        }
+                        if(res.data['code'] === 100){
+                            // 登录成功
+                            console.info('登录成功');
+                            vm.isLogin = true;
+                        } else {
+                            // 登录失败
+                            console.info('登录失败');
+                            vm.isLogin = false;
+                            vm.showLoginError();
+                        }
+                    }, (err) => {
+                        console.error(err);
+                        vm.isLogin = false;
+                        vm.showLoginError();
+                    });
+                },
+                logout: function(){
+                    var vm = this;
+                    this.$http.get(this.logoutUrl).then((res) => {
+                        if(res.ok){
+                            vm.isLogin = false;
+                        } else {
+                            console.info('注销用户时发生错误，res.ok = false');
+                        }
+                    }, (err) => {
+                        console.info('注销用户时发生错误' + err);
+                    });
+                },
+                onClickAction: function(){
+                    if(this.isLogin){
+                        this.logout();
+                    } else {
+                        this.login();
+                    }
+                },
+                showLoginError: function(){
+                    this.loginFailed = true;
+                    console.info('showLoginError ' + this.loginFailed);
+                },
+            },
+            watch: {
+                isLogin: function(oldVal, newVal){
+                    console.info('watch isLogin');
+                    this.$emit('loginchanged', this.isLogin);
+                }
+            },
+            created: function() {
+                  this.login();
+            },
+
+        });
+        Vue.component('userinfo', {
+            template: '#userinfo-template',
+            data: function(){
+                return {
+                    getUserInfoUrl: '/user/user_info',
+                    userinfo: {},
+                };
+            },
+            props: {
+                isLogin: {
+                    tyep: String,
+                    required: true,
+                },
+            },
+            methods: {
+                getUserInfo: function(){
+                    var vm = this;
+                    this.$http.get(this.getUserInfoUrl).then((res) => {
+                        if(res.ok){
+                            vm.userinfo = res.data;
+                        } else {
+                            vm.userinfo = {};
+                        }
+                    }, (err) => {
+                        vm.userinfo = {};
+                    });
+                },
+                clearUserInfo: function(){
+                    this.userinfo = {};
+                },
+            },
+            watch: {
+                isLogin: function(oldVal, newVal){
+                    if(this.isLogin){
+                        this.getUserInfo();
+                    } else {
+                        this.clearUserInfo();
+                    }
+                },
+            },
+        });
+        var app = new Vue({
+            el: '#userinfoapp',
+            data: {
+                isLogin: false,
+            },
+            methods: {
+                onLoginStateChanged: function(isLogin){
+                    console.info('onLoginStateChanged, ' + isLogin);
+                    this.isLogin = isLogin;
+                },
+            },
+        });
+    </script>
+</body>
+</html>
