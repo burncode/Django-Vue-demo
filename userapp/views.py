@@ -6,7 +6,7 @@ from django.contrib.auth import login as django_login, logout as django_logout, 
 from django.views.decorators.csrf import csrf_exempt
 
 import json
-
+import datetime
 
 # 错误码
 ERROR_LOGIN_OK = 100
@@ -64,8 +64,8 @@ def get_user_info(request):
             'firstname': user.first_name,
             'lastname': user.last_name,
             'email': user.email,
-            'lastlogin': user.last_login,
-            'datejoined': user.date_joined,
+            'lastlogin': datetime.datetime.strftime(user.last_login, '%Y/%m/%d %H:%M'),
+            'datejoined': datetime.datetime.strftime(user.date_joined, '%Y/%m/%d %H:%M'),
             })
     else:
         return JsonResponse({
