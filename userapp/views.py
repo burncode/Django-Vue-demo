@@ -33,6 +33,7 @@ def login(request):
             res = JsonResponse({
                 'code': ERROR_LOGIN_WRONG_PARAMS,
                 })
+            return res
         # 验证用户名/密码合法性
         user = django_auth(username=username, password=password)
         if user is None:
@@ -40,19 +41,17 @@ def login(request):
             res = JsonResponse({
                 'code': ERROR_LOGIN_WRONG_USERNAME_PASSWORD
                 })
+            return res
         else:
             django_login(request, user)
             res = JsonResponse({
                 'code': ERROR_LOGIN_OK
                 })
+            return res
     else:
         res = JsonResponse({
             'code': ERROR_LOGIN_ONLY_POST})
-    res['Access-Control-Allow-Origin'] = '*'
-    res["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
-    res["Access-Control-Max-Age"] = "1000"
-    res["Access-Control-Allow-Headers"] = "*"
-    return res
+        return res
 
 # 注销
 def logout(request):

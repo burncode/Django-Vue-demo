@@ -1,7 +1,7 @@
 <template>
 <div class="container" id="userinfoapp" >
-    <user-login v-on:loginchanged="onLoginStateChanged"></user-login>
-    <user-info :is-login="isLogin"></user-info>  
+    <user-login></user-login>
+    <user-info></user-info>  
 </div>
 </template>
 
@@ -10,7 +10,7 @@ import UserLogin from './UserLogin.vue'
 import UserInfo from './UserInfo.vue'
 
 export default {
-  data () {
+  /*data () {
     return {
       isLogin: false,
     };
@@ -20,7 +20,7 @@ export default {
         console.info('onLoginStateChanged, ' + isLogin);
         this.isLogin = isLogin;
     },
-  },
+  },*/
   components : {
     UserLogin,
     UserInfo

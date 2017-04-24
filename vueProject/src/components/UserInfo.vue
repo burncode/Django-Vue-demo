@@ -33,19 +33,25 @@
 </template>
 
 <script>
+import {mapState, mapMutations} from 'vuex'
+import {USER_INFO_URL} from '../config'
+
 export default {
   name: 'user-info',
   data: function(){
       return {
-          getUserInfoUrl: 'http://127.0.0.1:8000/user/user_info',
+          getUserInfoUrl: USER_INFO_URL,
           userinfo: {},
       };
   },
+  computed: mapState([
+      'isLogin',
+  ]),
   props: {
-      isLogin: {
+      /*isLogin: {
           tyep: String,
           required: true,
-      },
+      },*/
   },
   methods: {
       getUserInfo: function(){
@@ -53,6 +59,7 @@ export default {
           this.$http.get(this.getUserInfoUrl).then((res) => {
               if(res.ok){
                   vm.userinfo = res.data;
+                  console.info('userinfo ' + vm.userinfo.username);
               } else {
                   vm.userinfo = {};
               }
@@ -66,6 +73,7 @@ export default {
   },
   watch: {
       isLogin: function(oldVal, newVal){
+          console.info('UserInfo watch isLogin ' + this.isLogin);
           if(this.isLogin){
               this.getUserInfo();
           } else {

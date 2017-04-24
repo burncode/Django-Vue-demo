@@ -25,20 +25,28 @@
 
 <script>
 
+import {mapState, mapMutations} from 'vuex'
+import {LOGIN_URL, LOGOUT_URL} from '../config'
+
 export default {
     name: 'user-login',
     data: function(){
         return {
             username: 'linghuchong',
             password: 'test1234',
-            isLogin: false,
             errorMsg: "",
-            loginUrl: 'http://127.0.0.1:8000/user/login',
-            logoutUrl: 'http://127.0.0.1:8000/user/logout',
+            loginUrl: LOGIN_URL,
+            logoutUrl: LOGOUT_URL,
         };
     },
-    computed: {
-    },
+    computed: mapState({
+        isLogin: state => state.isLogin,
+    }),
+    /*
+    computed: mapState([
+        'isLogin',
+    ]),
+    */
     methods: {
         login: function(){
             var vm = this;
@@ -47,24 +55,25 @@ export default {
                 'password': this.password
             }).then((res) => {
                 if(!res.ok){
-                    vm.isLogin = false;
+                    vm.commitLoginState(false);
                     vm.showError('登录失败，服务器发生错误');
                     return;
                 }
+                console.info('login res code ' + res.data['code']);
                 if(res.data['code'] === 100){
                     // 登录成功
                     console.info('登录成功');
-                    vm.isLogin = true;
+                    vm.commitLoginState(true);
                     vm.dismissError();
                 } else {
                     // 登录失败
                     console.info('登录失败');
-                    vm.isLogin = false;
+                    vm.commitLoginState(false);
                     vm.showError('登录失败，用户名或密码错误');
                 }
             }, (err) => {
                 console.error(err);
-                vm.isLogin = false;
+                vm.commitLoginState(false);
                 vm.showError('登录失败，服务器发生错误');
             });
         },
@@ -72,13 +81,17 @@ export default {
             var vm = this;
             this.$http.get(this.logoutUrl).then((res) => {
                 if(res.ok){
-                    vm.isLogin = false;
+                    vm.commitLoginState(false);
                 } else {
                     console.info('注销用户时发生错误，res.ok = false');
                 }
             }, (err) => {
                 console.info('注销用户时发生错误' + err);
             });
+        },
+        commitLoginState (isLogin) {
+            console.info('commitLoginState ' + isLogin);
+            this.$store.commit('onLoginStateChanged', Boolean(isLogin));
         },
         onClickAction: function(){
             if(this.isLogin){
@@ -98,14 +111,13 @@ export default {
         },
     },
     watch: {
-        isLogin: function(oldVal, newVal){
+       /* isLogin: function(oldVal, newVal){
             console.info('watch isLogin');
             this.$emit('loginchanged', this.isLogin);
-        },
-
+        },*/
     },
     created: function() {
-            this.login();
+        this.login();
     },
 }
 </script>
