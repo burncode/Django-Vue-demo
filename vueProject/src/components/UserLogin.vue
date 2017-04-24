@@ -33,8 +33,8 @@ export default {
             password: 'test1234',
             isLogin: false,
             errorMsg: "",
-            loginUrl: '/user/login',
-            logoutUrl: '/user/logout',
+            loginUrl: 'http://127.0.0.1:8000/user/login',
+            logoutUrl: 'http://127.0.0.1:8000/user/logout',
         };
     },
     computed: {

@@ -28,25 +28,31 @@ def login(request):
         username = request.POST.get('username', json_data.get('username'))
         password = request.POST.get('password', json_data.get('password'))
         print username, password
+        res = None
         if username is None or password is None:
-            return JsonResponse({
+            res = JsonResponse({
                 'code': ERROR_LOGIN_WRONG_PARAMS,
                 })
         # 验证用户名/密码合法性
         user = django_auth(username=username, password=password)
         if user is None:
             # 用户名/密码非法
-            return JsonResponse({
+            res = JsonResponse({
                 'code': ERROR_LOGIN_WRONG_USERNAME_PASSWORD
                 })
         else:
             django_login(request, user)
-            return JsonResponse({
+            res = JsonResponse({
                 'code': ERROR_LOGIN_OK
                 })
     else:
-        return JsonResponse({
+        res = JsonResponse({
             'code': ERROR_LOGIN_ONLY_POST})
+    res['Access-Control-Allow-Origin'] = '*'
+    res["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    res["Access-Control-Max-Age"] = "1000"
+    res["Access-Control-Allow-Headers"] = "*"
+    return res
 
 # 注销
 def logout(request):

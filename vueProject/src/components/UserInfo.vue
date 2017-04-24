@@ -37,7 +37,7 @@ export default {
   name: 'user-info',
   data: function(){
       return {
-          getUserInfoUrl: '/user/user_info',
+          getUserInfoUrl: 'http://127.0.0.1:8000/user/user_info',
           userinfo: {},
       };
   },
