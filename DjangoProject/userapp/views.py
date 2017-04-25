@@ -24,6 +24,10 @@ def index(request):
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
+        if request.body is None or request.body == '':
+            return JsonResponse({
+                'code': ERROR_LOGIN_WRONG_PARAMS,
+            })
         json_data = json.loads(request.body)
         username = request.POST.get('username', json_data.get('username'))
         password = request.POST.get('password', json_data.get('password'))
