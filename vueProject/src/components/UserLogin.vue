@@ -35,7 +35,7 @@ export default {
             username: 'linghuchong',
             password: 'test1234',
             errorMsg: "",
-            loginUrl: LOGIN_URL,
+            loginUrl:  LOGIN_URL,
             logoutUrl: LOGOUT_URL,
         };
     },
@@ -51,8 +51,8 @@ export default {
         login: function(){
             var vm = this;
             this.$http.post(this.loginUrl, {
-                'username': this.username,
-                'password': this.password
+                username: this.username,
+                password: this.password
             }).then((res) => {
                 if(!res.ok){
                     vm.commitLoginState(false);
